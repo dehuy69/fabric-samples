@@ -1,0 +1,35 @@
+name: "fabric-network"
+version: 1.0.0
+
+client:
+  organization: Org1
+  connection:
+    timeout:
+      peer:
+        endorser: "300"
+  credentialStore:
+    path: "./credentialStore"
+    cryptoStore:
+      path: "./credentialStore/"
+
+organizations:
+  Org1:
+    mspid: Org1MSP
+    cryptoPath: ./org1.example.com/users/Admin@org1.example.com/msp
+    peers:
+      - peer0.org1.example.com
+    certificateAuthorities:
+      - ca.org1.example.com
+
+certificateAuthorities:
+  ca.org1.example.com:
+    url: https://org1.example.com:7054
+    caName: ca-org1
+    tlsCACerts:
+      path: "./org1.example.com/ca/ca.org1.example.com-cert.pem"
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    httpOptions:
+      verify: false
+
