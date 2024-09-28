@@ -3,6 +3,7 @@ package chaincode
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/hyperledger/fabric-contract-api-go/v2/contractapi"
 )
@@ -16,14 +17,19 @@ type Asset struct {
 	AppraisedValue int    `json:"appraised_value"`
 }
 
-const tableName = "Asset"
+// getTableName returns the name of the struct type to use as the table name
+func (a *Asset) getTableName() string {
+	return reflect.TypeOf(a).Elem().Name() // Get the struct name, the value is "Asset"
+}
 
-// CreateAsset creates a new asset and stores it in the world state
+// Save creates a new asset and stores it in the world state
 func (a *Asset) Save(ctx contractapi.TransactionContextInterface) error {
 	assetJSON, err := json.Marshal(a)
 	if err != nil {
 		return err
 	}
+
+	tableName := a.getTableName() // Automatically get the table name
 
 	// Store the asset with the tableName prefix
 	err = ctx.GetStub().PutState(tableName+"||"+a.ID, assetJSON)
@@ -36,6 +42,9 @@ func (a *Asset) Save(ctx contractapi.TransactionContextInterface) error {
 
 // ReadAsset retrieves an asset from the world state based on the asset ID
 func ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*Asset, error) {
+	asset := &Asset{}
+	tableName := asset.getTableName() // Automatically get the table name
+
 	// Retrieve the asset using the tableName prefix
 	assetJSON, err := ctx.GetStub().GetState(tableName + "||" + id)
 	if err != nil {
@@ -45,21 +54,22 @@ func ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*Asset, 
 		return nil, fmt.Errorf("asset %s does not exist", id)
 	}
 
-	var asset Asset
-	err = json.Unmarshal(assetJSON, &asset)
+	err = json.Unmarshal(assetJSON, asset)
 	if err != nil {
 		return nil, err
 	}
 
-	return &asset, nil
+	return asset, nil
 }
 
-// UpdateAsset updates the asset in the world state
+// Update updates the asset in the world state
 func (a *Asset) Update(ctx contractapi.TransactionContextInterface) error {
 	assetJSON, err := json.Marshal(a)
 	if err != nil {
 		return err
 	}
+
+	tableName := a.getTableName() // Automatically get the table name
 
 	// Update the asset with the tableName prefix
 	err = ctx.GetStub().PutState(tableName+"||"+a.ID, assetJSON)
@@ -72,6 +82,9 @@ func (a *Asset) Update(ctx contractapi.TransactionContextInterface) error {
 
 // DeleteAsset deletes an asset from the world state based on its ID
 func DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
+	asset := &Asset{}
+	tableName := asset.getTableName() // Automatically get the table name
+
 	// Check if asset exists using the tableName prefix
 	assetExists, err := IsAssetExists(ctx, id)
 	if err != nil {
@@ -85,8 +98,11 @@ func DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
 	return ctx.GetStub().DelState(tableName + "||" + id)
 }
 
-// AssetExists checks if an asset with the given ID exists in the world state
+// IsAssetExists checks if an asset with the given ID exists in the world state
 func IsAssetExists(ctx contractapi.TransactionContextInterface, id string) (bool, error) {
+	asset := &Asset{}
+	tableName := asset.getTableName() // Automatically get the table name
+
 	// Check if the asset exists using the tableName prefix
 	assetJSON, err := ctx.GetStub().GetState(tableName + "||" + id)
 	if err != nil {
